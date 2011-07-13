@@ -10,7 +10,7 @@
     clear_all/2
 ]).
 -include_lib("stdlib/include/qlc.hrl").
--record (state, {unique, node}).
+
 
 % utilities
 
@@ -32,57 +32,54 @@ all_records() ->
 
 %% todo: expire records
 
+
 %% handler protocol
 
 init(_Config, _State) -> 
-    % Get the session cookie and node...
-    Cookie = wf:cookie(get_cookie_name()),
+    Cookie = wf:cookie(wf:config_default(cookie_name, newcookie)),
     State = case wf:depickle(Cookie) of
-        undefined -> new_state();
-        Other -> Other
+        undefined -> unique();
+        X -> X
     end,
     {ok, State}.
 
 finish(_Config, State) -> 
-    % Drop the session cookie...
     Timeout = wf:config_default(session_timeout, 20),
-    ok = wf:cookie(get_cookie_name(), wf:pickle(State), "/", Timeout),
+    ok = wf:cookie(wf:config_default(cookie_name, newcookie),
+                   wf:pickle(State), "/", Timeout),
     {ok, []}.
 
-get_value(Key, DefaultValue, _Config, State) ->
-    F = fun()-> mnesia:read(session, cons_key(Key, State)) end,
+get_value(K, DefaultV, _Config, State) ->
+    DbKey = cons_key(K, State),
+    F = fun()-> mnesia:read(session, DbKey) end,
     {atomic, Xs} = mnesia:transaction(F),
-    Value = case Xs of
-        [{session,_,V,_}] -> V;
-        [] -> DefaultValue
+    V = case Xs of
+        [{session,DbKey,DbV,_}] -> DbV;
+        [] -> DefaultV
     end,
-    {ok, Value, State}.
+    {ok, V, State}.
 
-set_value(Key, Value, _Config, State) ->
-    K = cons_key(Key, State),
-    F = fun()-> Olds = mnesia:read(session, K),
-                mnesia:write({session, K, Value, now()}),
+set_value(K, V, _Config, State) ->
+    DbKey = cons_key(K, State),
+    F = fun()-> Olds = mnesia:read(session, DbKey),
+                mnesia:write({session, DbKey, V, now()}),
                 Olds
         end,
     {atomic, Olds} = mnesia:transaction(F),
-    OldValue = case Olds of 
-        [{session,_,V,_}] -> V;
+    OldV = case Olds of
+        [{session,DbKey,DbV,_}] -> DbV;
         [] -> undefined
     end,
-    {ok, OldValue, State}.
+    {ok, OldV, State}.
 
 clear_all(_Config, State) -> 
     %% todo: clear all keys with this unique state
     {ok, State}.
 
+
 %%% private
 
-cons_key(Key, State) ->
-    {State#state.unique, Key}.
+cons_key(K, State) ->
+    {State, K}.
 
-get_cookie_name() ->
-    wf:config_default(cookie_name, "newcookie").
-
-new_state() ->
-    Unique = erlang:md5(term_to_binary({now(), erlang:make_ref()})),
-    #state { unique=Unique }.
+unique() -> make_ref().
