@@ -1,3 +1,4 @@
+%% (c) 2011 Wojciech Kaczmarek
 -module(mnesia_session_handler).
 -behaviour(session_handler).
 -export([
