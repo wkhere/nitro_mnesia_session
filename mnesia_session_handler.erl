@@ -54,11 +54,7 @@ get_value(K, DefaultV, _Config, State) ->
     DbKey = cons_key(K, State),
     F = fun()-> mnesia:read(session, DbKey) end,
     {atomic, Xs} = mnesia:transaction(F),
-    V = case Xs of
-        [{session,DbKey,DbV,_}] -> DbV;
-        [] -> DefaultV
-    end,
-    {ok, V, State}.
+    {ok, value_or_default(Xs, DefaultV), State}.
 
 set_value(K, V, _Config, State) ->
     DbKey = cons_key(K, State),
@@ -67,11 +63,7 @@ set_value(K, V, _Config, State) ->
                 Olds
         end,
     {atomic, Olds} = mnesia:transaction(F),
-    OldV = case Olds of
-        [{session,DbKey,DbV,_}] -> DbV;
-        [] -> undefined
-    end,
-    {ok, OldV, State}.
+    {ok, value_or_default(Olds, undefined), State}.
 
 clear_all(_Config, State) -> 
     %% todo: clear all keys with this unique state
@@ -84,3 +76,6 @@ cons_key(K, State) ->
     {State, K}.
 
 unique() -> make_ref().
+
+value_or_default([{session,_,V,_}], _) -> V;
+value_or_default([], Default) -> Default.
