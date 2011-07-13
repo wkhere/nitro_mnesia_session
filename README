@@ -1,0 +1,21 @@
+nitro_mnesia_session
+====================
+
+Session handler for Nitrogen web app using Mnesia as a backend.
+
+
+Usage
+=====
+
+1. Put this repository in site/src/handlers/ (as a submodule if you prefer)
+
+2. Add to nitrogen_${your_server}:start/2:
+   mnesia_session_handler:install()
+
+3. Add handler in nitrogen_${your_serber}:loop/1 just before nitrogen:run():
+   nitrogen:handler(mnesia_session_handler, [])
+
+4. Recompile & restart
+
+
+Enjoy!
