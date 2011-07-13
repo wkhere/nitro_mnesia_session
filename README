@@ -12,7 +12,7 @@ Usage
 2. Add to nitrogen_${your_server}:start/2:
    mnesia_session_handler:install()
 
-3. Add handler in nitrogen_${your_serber}:loop/1 just before nitrogen:run():
+3. Add handler in nitrogen_${your_server}:loop/1 just before nitrogen:run():
    nitrogen:handler(mnesia_session_handler, [])
 
 4. Recompile & restart
