@@ -13,17 +13,23 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 
-% utilities
+%% utilities
 
 install() ->
-    mnesia:start(),
+    ok = mnesia:start(),
+    Me = node(),
+    case mnesia:change_table_copy_type(schema, Me, disc_copies) of
+        {atomic, ok} -> ok;
+        {aborted, {already_exists,schema,Me,disc_copies}} -> ok;
+        {aborted, Err} -> throw({aborted, Err})
+    end,
     case mnesia:create_table(
            session, [ {type, set}, {attributes, [key,val,timestamp]},
-                      {disc_copies,[node()]} ])
+                      {disc_copies,[Me]} ])
     of
         {atomic, ok} -> ok;
         {aborted, {already_exists,_}} -> ok;
-        {aborted, Reason} -> {err, Reason}
+        {aborted, Err2} -> throw({aborted, Err2})
     end.
 
 all_records() ->
