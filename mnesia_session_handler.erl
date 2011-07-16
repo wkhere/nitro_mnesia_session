@@ -57,13 +57,13 @@ finish(_Config, State) ->
     {ok, []}.
 
 get_value(K, DefaultV, _Config, State) ->
-    DbKey = cons_key(K, State),
+    DbKey = cons_dbkey(K, State),
     F = fun()-> mnesia:read(session, DbKey) end,
     {atomic, Xs} = mnesia:transaction(F),
     {ok, value_or_default(Xs, DefaultV), State}.
 
 set_value(K, V, _Config, State) ->
-    DbKey = cons_key(K, State),
+    DbKey = cons_dbkey(K, State),
     F = fun()-> Olds = mnesia:read(session, DbKey),
                 mnesia:write({session, DbKey, V, now()}),
                 Olds
@@ -78,7 +78,7 @@ clear_all(_Config, State) ->
 
 %%% private
 
-cons_key(K, State) ->
+cons_dbkey(K, State) ->
     {State, K}.
 
 delete_all_state(State) ->
