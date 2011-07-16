@@ -81,12 +81,19 @@ clear_all(_Config, State) ->
 cons_dbkey(K, State) ->
     {State, K}.
 
+q_keys_with_state(State) ->
+    qlc:q(
+      [ K || {session,{S,K},_,_} <- mnesia:table(session),
+             S =:= State ]).
+
 delete_all_state(State) ->
-    Q = qlc:q(
-          [ mnesia:delete({session, {S,K}}) 
-            || {session,{S,K},_,_} <- mnesia:table(session),
-               S =:= State ]),
-    qlc:e(Q).
+    qlc:fold(fun(X,_)->
+                     ok = mnesia:delete({session,{State,X}}),
+                     anything
+             end,
+             anything,
+             q_keys_with_state(State)),
+    ok.
 
 unique() -> make_ref().
 
