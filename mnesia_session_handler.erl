@@ -24,7 +24,8 @@ install() ->
         {aborted, Err} -> throw({aborted, Err})
     end,
     case mnesia:create_table(
-           session, [ {type, set}, {attributes, [key,val,timestamp]},
+           session, [ {type, set}, {attributes, [key,skey,val,timestamp]},
+                      {index, [skey]},
                       {disc_copies,[Me]} ])
     of
         {atomic, ok} -> ok;
@@ -65,7 +66,7 @@ get_value(K, DefaultV, _Config, State) ->
 set_value(K, V, _Config, State) ->
     DbKey = cons_dbkey(K, State),
     F = fun()-> Olds = mnesia:read(session, DbKey),
-                mnesia:write({session, DbKey, V, now()}),
+                mnesia:write({session, DbKey, State, V, now()}),
                 Olds
         end,
     {atomic, Olds} = mnesia:transaction(F),
@@ -83,7 +84,7 @@ cons_dbkey(K, State) ->
 
 q_keys_with_state(State) ->
     qlc:q(
-      [ K || {session,{S,K},_,_} <- mnesia:table(session),
+      [ K || {session,{S,K},S,_,_} <- mnesia:table(session),
              S =:= State ]).
 
 delete_all_state(State) ->
@@ -97,7 +98,7 @@ delete_all_state(State) ->
 
 unique() -> make_ref().
 
-value_or_default([{session,_,V,_}], _) -> V;
+value_or_default([{session,_,_,V,_}], _) -> V;
 value_or_default([], Default) -> Default.
 
 
