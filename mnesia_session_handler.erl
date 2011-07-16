@@ -111,6 +111,7 @@ simple_ts() ->
     K3 = unique(),
     {ok,OldV1,State} = set_value(K1,V1,[],State),
     {ok,OldV2,State} = set_value(K2,V2,[],State),
+    {ok,NewV2,State} = set_value(K2,V2,[],State),
     {ok,V1_,State} = get_value(K1,default,[],State),
     {ok,V2_,State} = get_value(K2,default,[],State),
     {ok,V3_,State} = get_value(K3,default,[],State),
@@ -122,6 +123,7 @@ simple_ts() ->
     [ 
       ?_assertEqual(OldV1, undefined),
       ?_assertEqual(OldV2, undefined),
+      ?_assertEqual(NewV2, V2),
       ?_assertEqual(V1_, V1),
       ?_assertEqual(V2_, V2),
       ?_assertEqual(V3_, default),
