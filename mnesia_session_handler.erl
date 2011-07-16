@@ -65,8 +65,8 @@ set_value(K, V, _Config, State) ->
     {atomic, Olds} = mnesia:transaction(F),
     {ok, value_or_default(Olds, undefined), State}.
 
-clear_all(_Config, State) -> 
-    %% todo: clear all keys with this unique state
+clear_all(_Config, State) ->
+    {atomic,_} = mnesia:transaction(fun delete_all_state/1, [State]),
     {ok, State}.
 
 
@@ -74,6 +74,13 @@ clear_all(_Config, State) ->
 
 cons_key(K, State) ->
     {State, K}.
+
+delete_all_state(State) ->
+    Q = qlc:q(
+          [ mnesia:delete({session, {S,K}}) 
+            || {session,{S,K},_,_} <- mnesia:table(session),
+               S =:= State ]),
+    qlc:e(Q).
 
 unique() -> make_ref().
 
