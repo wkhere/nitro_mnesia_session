@@ -99,3 +99,33 @@ unique() -> make_ref().
 
 value_or_default([{session,_,V,_}], _) -> V;
 value_or_default([], Default) -> Default.
+
+
+%%% test
+-include_lib("eunit/include/eunit.hrl").
+
+db_simple_test_() ->
+    ok = install(),
+    State = unique(),
+    {K1,V1} = {unique(), 42},
+    {K2,V2} = {unique(), 23},
+    K3 = unique(),
+    {ok,OldV1,State} = set_value(K1,V1,[],State),
+    {ok,OldV2,State} = set_value(K2,V2,[],State),
+    {ok,V1_,State} = get_value(K1,default,[],State),
+    {ok,V2_,State} = get_value(K2,default,[],State),
+    {ok,V3_,State} = get_value(K3,default,[],State),
+    {atomic,Ks_} = mnesia:transaction(fun()-> qlc:e(q_keys_with_state(State)) 
+                                      end),
+    {ok,State} = clear_all([],State),
+    {atomic,NoKs} = mnesia:transaction(fun()-> qlc:e(q_keys_with_state(State)) 
+                                       end),
+    [ 
+      ?_assertEqual(OldV1, undefined),
+      ?_assertEqual(OldV2, undefined),
+      ?_assertEqual(V1_, V1),
+      ?_assertEqual(V2_, V2),
+      ?_assertEqual(V3_, default),
+      ?_assertEqual(lists:sort(Ks_), lists:sort([K1,K2])),
+      ?_assertEqual(NoKs, []),
+      []].

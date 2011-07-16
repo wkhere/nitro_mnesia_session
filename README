@@ -18,6 +18,16 @@ Usage
 4. Recompile & restart
 
 
+Tests
+=====
+
+There is some basic eunit stuff, but there's no external tests
+runner. First you should answer yourself a question if you want to
+modify db in ram during tests, or on a disc, or maybe rollback the
+whole thing. Just run tests manually from within your node in the
+conditions you prefer.
+
+
 License
 =======
 This code is released under the BSD 2-Clause License.
