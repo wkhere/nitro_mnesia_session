@@ -117,9 +117,13 @@ simple_ts() ->
     {ok,V3_,State} = get_value(K3,default,[],State),
     {atomic,Ks_} = mnesia:transaction(fun()-> qlc:e(q_keys_with_state(State)) 
                                       end),
+    State2 = unique(),
+    {ok,_,State2} = set_value(K1,V1,[],State2),
     {ok,State} = clear_all([],State),
     {atomic,NoKs} = mnesia:transaction(fun()-> qlc:e(q_keys_with_state(State)) 
                                        end),
+    {atomic,Ks2} = mnesia:transaction(fun()-> qlc:e(q_keys_with_state(State2))
+                                      end),
     [ 
       ?_assertEqual(OldV1, undefined),
       ?_assertEqual(OldV2, undefined),
@@ -129,6 +133,7 @@ simple_ts() ->
       ?_assertEqual(V3_, default),
       ?_assertEqual(lists:sort(Ks_), lists:sort([K1,K2])),
       ?_assertEqual(NoKs, []),
+      ?_assertEqual(Ks2, [K1]),
       []].
 
 simple_test_() ->
