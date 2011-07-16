@@ -24,7 +24,7 @@ install() ->
         {aborted, Err} -> throw({aborted, Err})
     end,
     case mnesia:create_table(
-           session, [ {type, set}, {attributes, [key,val,timestamp]},
+           session, [ {type, bag}, {attributes, [skey,k,v,timestamp]},
                       {disc_copies,[Me]} ])
     of
         {atomic, ok} -> ok;
@@ -57,47 +57,38 @@ finish(_Config, State) ->
     {ok, []}.
 
 get_value(K, DefaultV, _Config, State) ->
-    DbKey = cons_dbkey(K, State),
-    F = fun()-> mnesia:read(session, DbKey) end,
-    {atomic, Xs} = mnesia:transaction(F),
+    Q = qlc:q([ V || {session,SK,K0,V,_} <- mnesia:table(session),
+                SK=:=State, K0=:=K ]),
+    {atomic, Xs} = mnesia:transaction(fun()-> qlc:e(Q) end),
     {ok, value_or_default(Xs, DefaultV), State}.
 
 set_value(K, V, _Config, State) ->
-    DbKey = cons_dbkey(K, State),
-    F = fun()-> Olds = mnesia:read(session, DbKey),
-                mnesia:write({session, DbKey, V, now()}),
-                Olds
+    Q = qlc:q([ {V0,T0} || {session,SK,K0,V0,T0} <- mnesia:table(session),
+                SK=:=State, K0=:=K ]),
+    F = fun()-> Xs0 = qlc:e(Q),
+                [ mnesia:delete_object({session,State,K,V0,T0})
+                  || {V0,T0} <- Xs0 ],
+                mnesia:write({session, State, K, V, now()}),
+                [ V0 || {V0,_} <- Xs0 ]
         end,
     {atomic, Olds} = mnesia:transaction(F),
     {ok, value_or_default(Olds, undefined), State}.
 
 clear_all(_Config, State) ->
-    {atomic,_} = mnesia:transaction(fun delete_all_state/1, [State]),
+    {atomic,ok} = mnesia:transaction(fun mnesia:delete/1, [{session,State}]),
     {ok, State}.
 
 
 %%% private
 
-cons_dbkey(K, State) ->
-    {State, K}.
-
 q_keys_with_state(State) ->
     qlc:q(
-      [ K || {session,{S,K},_,_} <- mnesia:table(session),
-             S =:= State ]).
-
-delete_all_state(State) ->
-    qlc:fold(fun(X,_)->
-                     ok = mnesia:delete({session,{State,X}}),
-                     anything
-             end,
-             anything,
-             q_keys_with_state(State)),
-    ok.
+      [ K || {session,SK,K,_,_} <- mnesia:table(session),
+             SK=:=State ]).
 
 unique() -> make_ref().
 
-value_or_default([{session,_,V,_}], _) -> V;
+value_or_default([V], _) -> V;
 value_or_default([], Default) -> Default.
 
 
