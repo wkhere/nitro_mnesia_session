@@ -22,10 +22,10 @@ Tests
 =====
 
 There is some basic eunit stuff, but there's no external tests
-runner. First you should answer yourself a question if you want to
-modify db in ram during tests, or on a disc, or maybe rollback the
-whole thing. Just run tests manually from within your node in the
-conditions you prefer.
+runner. Whatever is written to the db during tests is rolled back.
+If you prefer that tests wouldn't touch the disc at all, run them
+manually in the conditions of your choice (eg. switching tables to
+ram_copies).
 
 
 License

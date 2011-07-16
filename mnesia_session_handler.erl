@@ -104,8 +104,7 @@ value_or_default([], Default) -> Default.
 %%% test
 -include_lib("eunit/include/eunit.hrl").
 
-db_simple_test_() ->
-    ok = install(),
+simple_ts() ->
     State = unique(),
     {K1,V1} = {unique(), 42},
     {K2,V2} = {unique(), 23},
@@ -129,3 +128,13 @@ db_simple_test_() ->
       ?_assertEqual(lists:sort(Ks_), lists:sort([K1,K2])),
       ?_assertEqual(NoKs, []),
       []].
+
+simple_test_() ->
+    ok = install(),
+    TestsRef = make_ref(),
+    %% need to pass tests via dict, because transaction is aborted manually
+    Wrapper = fun()-> put(TestsRef, simple_ts()),
+                      mnesia:abort(my_rollback)
+              end,
+    {aborted, my_rollback} = mnesia:transaction(Wrapper),
+    erase(TestsRef).
