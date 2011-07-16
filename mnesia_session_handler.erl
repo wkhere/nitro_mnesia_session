@@ -101,7 +101,7 @@ value_or_default([{session,_,V,_}], _) -> V;
 value_or_default([], Default) -> Default.
 
 
-%%% test
+%%% tests
 -include_lib("eunit/include/eunit.hrl").
 
 simple_ts() ->
