@@ -29,7 +29,7 @@ install() ->
                       {disc_copies,[Me]} ])
     of
         {atomic, ok} -> ok;
-        {aborted, {already_exists,_}} -> ok;
+        {aborted, {already_exists,session}} -> ok;
         {aborted, Err2} -> throw({aborted, Err2})
     end.
 
