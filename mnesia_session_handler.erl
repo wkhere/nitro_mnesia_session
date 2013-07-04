@@ -10,7 +10,8 @@
     finish/2,
     get_value/4, 
     set_value/4, 
-    clear_all/2
+    clear_all/2,
+    session_id/2
 ]).
 -include_lib("stdlib/include/qlc.hrl").
 
@@ -80,6 +81,9 @@ clear_all(_Config, State) ->
     {atomic,_} = mnesia:transaction(fun delete_all_state/1, [State]),
     {ok, State}.
 
+session_id(_Config, State) ->
+    {ok, SessionId} = wf:hex_encode(State),
+    {ok, SessionId, State}.
 
 %%% private
 
