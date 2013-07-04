@@ -14,7 +14,7 @@
     session_id/2
 ]).
 -include_lib("stdlib/include/qlc.hrl").
-
+-define(cookie, "newcookie").
 
 %% utilities
 
@@ -49,7 +49,7 @@ all_records() ->
 %% handler protocol
 
 init(_Config, _State) -> 
-    Cookie = wf:cookie(wf:config_default(cookie_name, newcookie)),
+    Cookie = wf:cookie(wf:config_default(cookie_name, ?cookie)),
     State = case wf:depickle(Cookie) of
         undefined -> unique();
         X -> X
@@ -58,7 +58,7 @@ init(_Config, _State) ->
 
 finish(_Config, State) -> 
     Timeout = wf:config_default(session_timeout, 20),
-    ok = wf:cookie(wf:config_default(cookie_name, newcookie),
+    ok = wf:cookie(wf:config_default(cookie_name, ?cookie),
                    wf:pickle(State), "/", Timeout),
     {ok, []}.
 
