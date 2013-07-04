@@ -98,7 +98,8 @@ delete_all_state(State) ->
              q_keys_with_state(State)),
     ok.
 
-unique() -> make_ref().
+-spec unique() -> binary().
+unique() -> term_to_binary(make_ref()).
 
 value_or_default([{session,_,_,V,_}], _) -> V;
 value_or_default([], Default) -> Default.
