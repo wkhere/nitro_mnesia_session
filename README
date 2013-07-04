@@ -9,10 +9,11 @@ Usage
 
 1. Put this repository in site/src/handlers/ (as a submodule if you prefer)
 
-2. Add to nitrogen_${your_server}:start/2:
+2. Add at the beginning of your nitrogen_app:start/2:
    ok = mnesia_session_handler:install()
 
-3. Add handler in nitrogen_${your_server}:loop/1 just before nitrogen:run():
+3. Add handler in nitrogen_${your_backend_server}:handle/2 
+   just before nitrogen:run():
    nitrogen:handler(mnesia_session_handler, [])
 
 4. Recompile & restart
