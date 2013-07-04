@@ -17,6 +17,7 @@
 
 %% utilities
 
+-spec install() -> ok.
 install() ->
     ok = mnesia:start(),
     Me = node(),
@@ -35,6 +36,7 @@ install() ->
         {aborted, Err2} -> throw({aborted, Err2})
     end.
 
+-spec all_records() -> [tuple()].
 all_records() ->
     Q = qlc:q([X || X <- mnesia:table(session)]),
     {atomic, Xs} = mnesia:transaction(fun()-> qlc:e(Q) end),
