@@ -1,4 +1,6 @@
-%% (c) 2011 Wojciech Kaczmarek
+%% (c) 2011-2013 Wojciech Kaczmarek <frk@kofeina.net>.
+%% All rights reverved. See license for more details:
+%% http://github.com/herenowcoder/nitro_mnesia_session/raw/master/LICENSE
 -module(mnesia_session_handler).
 -behaviour(session_handler).
 -export([
