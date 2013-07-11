@@ -49,7 +49,7 @@ get_value(K, DefaultV, _Config, State) ->
     DbKey = cons_dbkey(K, State),
     F = fun()-> mnesia:read(session, DbKey) end,
     {atomic, Xs} = mnesia:transaction(F),
-    {ok, value_or_default(Xs, DefaultV), State}.
+    {ok, maybe(Xs, DefaultV), State}.
 
 -spec set_value(key(), val(), config(), state()) -> {ok, val(), state()}.
 set_value(K, V, _Config, State) ->
@@ -59,7 +59,7 @@ set_value(K, V, _Config, State) ->
                 Olds
         end,
     {atomic, Olds} = mnesia:transaction(F),
-    {ok, value_or_default(Olds, undefined), State}.
+    {ok, maybe(Olds, undefined), State}.
 
 -spec clear_all(config(), state()) -> {ok, state()}.
 clear_all(_Config, State) ->
@@ -127,9 +127,9 @@ delete_all_state(State) ->
 -spec unique() -> unique_token().
 unique() -> term_to_binary(make_ref()).
 
--spec value_or_default(list(dbrec()), val()) -> val().
-value_or_default([{session,_,_,V,_}], _) -> V;
-value_or_default([], Default) -> Default.
+-spec maybe(list(dbrec()), val()) -> val().
+maybe([{session,_,_,V,_}], _) -> V;
+maybe([], Default) -> Default.
 
 
 %%% tests
