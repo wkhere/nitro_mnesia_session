@@ -16,6 +16,13 @@
 -include_lib("stdlib/include/qlc.hrl").
 -define(cookie, "newcookie"). % cookie name if undefined in etc/app.config
 
+%% types
+-type unique_token() :: binary().
+-type key() :: any().
+-type val() :: any().
+-type config() :: any().
+-type state() :: unique_token() | [].
+
 %% utilities
 
 -spec install() -> ok.
@@ -48,6 +55,7 @@ all_records() ->
 
 %% handler protocol
 
+-spec init(config(), state()) -> {ok, state()}.
 init(_Config, _State) -> 
     Cookie = wf:cookie(wf:config_default(cookie_name, ?cookie)),
     State = case wf:depickle(Cookie) of
@@ -56,18 +64,21 @@ init(_Config, _State) ->
     end,
     {ok, State}.
 
+-spec finish(config(), state()) -> {ok, state()}.
 finish(_Config, State) -> 
     Timeout = wf:config_default(session_timeout, 20),
     ok = wf:cookie(wf:config_default(cookie_name, ?cookie),
                    wf:pickle(State), "/", Timeout),
     {ok, []}.
 
+-spec get_value(key(), val(), config(), state()) -> {ok, val(), state()}.
 get_value(K, DefaultV, _Config, State) ->
     DbKey = cons_dbkey(K, State),
     F = fun()-> mnesia:read(session, DbKey) end,
     {atomic, Xs} = mnesia:transaction(F),
     {ok, value_or_default(Xs, DefaultV), State}.
 
+-spec set_value(key(), val(), config(), state()) -> {ok, val(), state()}.
 set_value(K, V, _Config, State) ->
     DbKey = cons_dbkey(K, State),
     F = fun()-> Olds = mnesia:read(session, DbKey),
@@ -77,16 +88,19 @@ set_value(K, V, _Config, State) ->
     {atomic, Olds} = mnesia:transaction(F),
     {ok, value_or_default(Olds, undefined), State}.
 
+-spec clear_all(config(), state()) -> {ok, state()}.
 clear_all(_Config, State) ->
     {atomic,_} = mnesia:transaction(fun delete_all_state/1, [State]),
     {ok, State}.
 
+-spec session_id(config(), state()) -> {ok, binary(), state()}.
 session_id(_Config, State) ->
     {ok, SessionId} = wf:hex_encode(State),
     {ok, SessionId, State}.
 
 %%% private
 
+-spec cons_dbkey(key(), state()) -> any().
 cons_dbkey(K, State) ->
     {State, K}.
 
@@ -104,7 +118,7 @@ delete_all_state(State) ->
              q_keys_with_state(State)),
     ok.
 
--spec unique() -> binary().
+-spec unique() -> unique_token().
 unique() -> term_to_binary(make_ref()).
 
 value_or_default([{session,_,_,V,_}], _) -> V;
