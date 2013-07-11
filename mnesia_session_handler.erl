@@ -81,6 +81,7 @@ install() ->
     end,
     case mnesia:create_table(
            session, [ {type, set}, {attributes, [key,skey,val,timestamp]},
+                      %% key is some composite key, skey is session key
                       {index, [skey]},
                       {disc_copies,[Me]} ])
     of
