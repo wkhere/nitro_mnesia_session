@@ -23,36 +23,6 @@
 -type config() :: any().
 -type state() :: unique_token() | [].
 
-%% utilities
-
--spec install() -> ok.
-install() ->
-    ok = mnesia:start(),
-    Me = node(),
-    case mnesia:change_table_copy_type(schema, Me, disc_copies) of
-        {atomic, ok} -> ok;
-        {aborted, {already_exists,schema,Me,disc_copies}} -> ok;
-        {aborted, Err} -> throw({aborted, Err})
-    end,
-    case mnesia:create_table(
-           session, [ {type, set}, {attributes, [key,skey,val,timestamp]},
-                      {index, [skey]},
-                      {disc_copies,[Me]} ])
-    of
-        {atomic, ok} -> ok;
-        {aborted, {already_exists,session}} -> ok;
-        {aborted, Err2} -> throw({aborted, Err2})
-    end.
-
--spec all_records() -> [tuple()].
-all_records() ->
-    Q = qlc:q([X || X <- mnesia:table(session)]),
-    {atomic, Xs} = mnesia:transaction(fun()-> qlc:e(Q) end),
-    Xs.
-
-%% todo: expire records
-
-
 %% handler protocol
 
 -spec init(config(), state()) -> {ok, state()}.
@@ -97,6 +67,36 @@ clear_all(_Config, State) ->
 session_id(_Config, State) ->
     {ok, SessionId} = wf:hex_encode(State),
     {ok, SessionId, State}.
+
+%% utilities
+
+-spec install() -> ok.
+install() ->
+    ok = mnesia:start(),
+    Me = node(),
+    case mnesia:change_table_copy_type(schema, Me, disc_copies) of
+        {atomic, ok} -> ok;
+        {aborted, {already_exists,schema,Me,disc_copies}} -> ok;
+        {aborted, Err} -> throw({aborted, Err})
+    end,
+    case mnesia:create_table(
+           session, [ {type, set}, {attributes, [key,skey,val,timestamp]},
+                      {index, [skey]},
+                      {disc_copies,[Me]} ])
+    of
+        {atomic, ok} -> ok;
+        {aborted, {already_exists,session}} -> ok;
+        {aborted, Err2} -> throw({aborted, Err2})
+    end.
+
+-spec all_records() -> [tuple()].
+all_records() ->
+    Q = qlc:q([X || X <- mnesia:table(session)]),
+    {atomic, Xs} = mnesia:transaction(fun()-> qlc:e(Q) end),
+    Xs.
+
+%% todo: expire records
+
 
 %%% private
 
