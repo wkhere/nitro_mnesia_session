@@ -14,7 +14,7 @@
     session_id/2
 ]).
 -include_lib("stdlib/include/qlc.hrl").
--define(cookie, "newcookie").
+-define(cookie, "newcookie"). % cookie name if undefined in etc/app.config
 
 %% utilities
 
