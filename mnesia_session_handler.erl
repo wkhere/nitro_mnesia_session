@@ -17,11 +17,14 @@
 -define(cookie, "newcookie"). % cookie name if undefined in etc/app.config
 
 %% types
+-type timestamp() :: {non_neg_integer(), non_neg_integer(), non_neg_integer()}.
 -type unique_token() :: binary().
 -type key() :: any().
 -type val() :: any().
 -type config() :: any().
 -type state() :: unique_token() | [].
+-type dbkey() :: any().
+-type dbrec() :: {session, dbkey(), key(), val(), timestamp()}.
 
 %% handler protocol
 
@@ -90,7 +93,7 @@ install() ->
         {aborted, Err2} -> throw({aborted, Err2})
     end.
 
--spec all_records() -> [tuple()].
+-spec all_records() -> [dbrec()].
 all_records() ->
     Q = qlc:q([X || X <- mnesia:table(session)]),
     {atomic, Xs} = mnesia:transaction(fun()-> qlc:e(Q) end),
@@ -101,15 +104,17 @@ all_records() ->
 
 %%% private
 
--spec cons_dbkey(key(), state()) -> any().
+-spec cons_dbkey(key(), state()) -> dbkey().
 cons_dbkey(K, State) ->
     {State, K}.
 
+-spec q_keys_with_state(state()) -> qlc:query_handle().
 q_keys_with_state(State) ->
     qlc:q(
       [ K || {session,{S,K},S,_,_} <- mnesia:table(session),
              S =:= State ]).
 
+-spec delete_all_state(state()) -> ok.
 delete_all_state(State) ->
     qlc:fold(fun(X,_)->
                      ok = mnesia:delete({session,{State,X}}),
@@ -122,6 +127,7 @@ delete_all_state(State) ->
 -spec unique() -> unique_token().
 unique() -> term_to_binary(make_ref()).
 
+-spec value_or_default(list(dbrec()), val()) -> val().
 value_or_default([{session,_,_,V,_}], _) -> V;
 value_or_default([], Default) -> Default.
 
